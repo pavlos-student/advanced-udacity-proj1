@@ -7,6 +7,7 @@ import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for, current_app
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import SQLAlchemyError
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
@@ -22,7 +23,7 @@ app.config.from_object('config')
 db = SQLAlchemy(app)
 
 # TODO - DONE: connect to a local postgresql database
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True # to disable warning
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SQLALCHEMY_DATABASE_URI']
 migrate = Migrate(app, db)
 
@@ -42,7 +43,7 @@ class Venue(db.Model):
     facebook_link = db.Column(db.String(120))
     venue_shows = db.relationship('Show', backref='Venue', lazy=True)
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+    # TODO - Done: implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
@@ -56,9 +57,25 @@ class Artist(db.Model):
     facebook_link = db.Column(db.String(120))
     artist_shows = db.relationship('Show', backref='Artist', lazy=True)
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+    # TODO - Done : implement any missing fields, as a database migration using Flask-Migrate
 
-# TODO - Boulos : change Nullable to False after DB entries
+    # initializing data - constructor
+    def __init__(self, name, city, state, phone, genres, image_link, facebook_link):
+      self.name = name
+      self.city = city
+      self.state = state
+      self.phone = phone
+      self.genres = genres
+      self.image_link = image_link
+      self.facebook_link = facebook_link
+
+    def addArtist(self):
+      db.session.add(self)
+      db.session.commit()
+
+    # add: update & delete functions
+
+# TODO - Boulos : change Nullable to False after DB entries then mark as Done
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 class Show(db.Model):
@@ -429,13 +446,29 @@ def create_artist_submission():
   # called upon submitting the new artist listing form
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
+  dataFromForm = request.form
 
-  # on successful db insert, flash success
-  flash('Artist ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
-  return render_template('pages/home.html')
-
+  try:
+    # retrieve artist's data from the form submitted by the user 
+    newArtist = Artist(
+      name = dataFromForm.get('name'),
+      city = dataFromForm.get('city'),
+      state = dataFromForm.get('state'),
+      phone = dataFromForm.get('phone'),
+      genres = dataFromForm.getlist('genres'),
+      image_link = dataFromForm.get('image_link'),
+      facebook_link = dataFromForm.get('facebook_link')
+    )
+    # add the new artist to the DB
+    Artist.addArtist(newArtist)
+  except:
+    # TODO - Done: on unsuccessful db insert, flash an error instead.
+    flash('the following error occured: ' + SQLAlchemyError.message + 'Artist ' + dataFromForm.name + ' could not be listed.')
+    db.session.rollback()
+  finally:
+    # on successful db insert, flash success
+    flash('Artist ' + request.form['name'] + ' was successfully listed!')
+    return render_template('pages/home.html')
 
 #  Shows
 #  ----------------------------------------------------------------
