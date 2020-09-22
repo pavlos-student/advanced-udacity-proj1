@@ -35,6 +35,7 @@ class Venue(db.Model):
     __tablename__ = 'Venue'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
+    genres = db.Column(db.String(120))
     city = db.Column(db.String(120))
     state = db.Column(db.String(120))
     address = db.Column(db.String(120))
@@ -44,6 +45,23 @@ class Venue(db.Model):
     venue_shows = db.relationship('Show', backref='Venue', lazy=True)
 
     # TODO - Done: implement any missing fields, as a database migration using Flask-Migrate
+
+    # initializing data - constructor
+    def __init__(self, name, genres, city, state, address, phone, image_link, facebook_link):
+      self.name = name
+      self.genres = genres
+      self.city = city
+      self.state = state
+      self.address = address
+      self.phone = phone
+      self.image_link = image_link
+      self.facebook_link = facebook_link
+
+    def addVenue(self):
+      db.session.add(self)
+      db.session.commit()
+
+    # add: update & delete functions
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
@@ -253,12 +271,30 @@ def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
 
-  # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  return render_template('pages/home.html')
+  dataFromForm = request.form
+
+  try:
+    # retrieve venue's data from the form submitted by the user 
+    newVenue = Venue(
+      name = dataFromForm.get('name'),
+      genres = dataFromForm.getlist('genres'),
+      city = dataFromForm.get('city'),
+      state = dataFromForm.get('state'),
+      address = dataFromForm.get('address'),
+      phone = dataFromForm.get('phone'),
+      image_link = dataFromForm.get('image_link'),
+      facebook_link = dataFromForm.get('facebook_link')
+    )
+    # add the new venue to the DB
+    Venue.addVenue(newVenue)
+  except:
+    # TODO - Done: on unsuccessful db insert, flash an error instead.
+    flash('the following error occured: ' + SQLAlchemyError.message + 'Venue ' + dataFromForm.name + ' could not be listed.')
+    db.session.rollback()
+  finally:
+    # on successful db insert, flash success
+    flash('Venue ' + request.form['name'] + ' was successfully listed!')
+    return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
