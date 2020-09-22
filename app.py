@@ -106,6 +106,18 @@ class Show(db.Model):
   artist_image_link = db.Column(db.String(500))
   start_time = db.Column(db.DateTime, nullable=False)
 
+  # initializing data - constructor
+  def __init__(self, venue_id, artist_id, start_time):
+    self.venue_id = venue_id
+    self.artist_id = artist_id
+    self.start_time = start_time
+
+  def addShow(self):
+    db.session.add(self)
+    db.session.commit()
+
+    # add: update & delete functions
+
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
@@ -268,7 +280,7 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-  # TODO: insert form data as a new Venue record in the db, instead
+  # TODO - Done: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
 
   dataFromForm = request.form
@@ -480,7 +492,7 @@ def create_artist_form():
 @app.route('/artists/create', methods=['POST'])
 def create_artist_submission():
   # called upon submitting the new artist listing form
-  # TODO: insert form data as a new Venue record in the db, instead
+  # TODO - Done: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
   dataFromForm = request.form
 
@@ -561,14 +573,26 @@ def create_shows():
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
   # called to create new shows in the db, upon submitting new show listing form
-  # TODO: insert form data as a new Show record in the db, instead
+  # TODO - Done: insert form data as a new Show record in the db, instead
+  dataFromForm = request.form
 
-  # on successful db insert, flash success
-  flash('Show was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Show could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  return render_template('pages/home.html')
+  try:
+    # retrieve show's data from the form submitted by the user 
+    newShow = Show(
+      venue_id = dataFromForm.get('venue_id'),
+      artist_id = dataFromForm.get('artist_id'),
+      start_time = dataFromForm.get('start_time')
+    )
+    # add the new show to the DB
+    Show.addShow(newShow)
+  except:
+    # TODO - Done: on unsuccessful db show, flash an error instead.
+    flash('An error occurred. Show could not be listed.')
+    db.session.rollback()
+  finally:
+    # on successful db show, flash success
+    flash('Show was successfully listed!')
+    return render_template('pages/home.html')
 
 @app.errorhandler(404)
 def not_found_error(error):
