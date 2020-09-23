@@ -64,6 +64,13 @@ class Venue(db.Model):
       db.session.add(self)
       db.session.commit()
 
+    def updateVenue(self):
+      db.session.commit()
+
+    def deleteVenue(self):
+      db.session.delete(self)
+      db.session.commit()
+
     def getDetails(self):
       return {
         'id': self.id,
@@ -113,6 +120,13 @@ class Artist(db.Model):
       db.session.add(self)
       db.session.commit()
 
+    def updateArtist(self):
+      db.session.commit()
+
+    def deleteArtist(self):
+      db.session.delete(self)
+      db.session.commit()
+
     def getDetails(self):
       return {
         'id': self.id,
@@ -124,6 +138,7 @@ class Artist(db.Model):
         'image_link': self.image_link,
         'facebook_link': self.facebook_link
       }
+      
     def getShortDisplay(self):
       return {
         'id': self.id,
@@ -240,7 +255,7 @@ def venues():
         }]
       })
 
-  return render_template('pages/venues.html', areas=data);
+  return render_template('pages/venues.html', areas=data)
   
   # data=[{
   #   "city": "San Francisco",
@@ -266,7 +281,7 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
+  # TODO - Done: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
   
@@ -411,7 +426,8 @@ def create_venue_form():
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
   # TODO - Done: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
+  # TODO - adviced to be ignored in question 109582 (https://knowledge.udacity.com/questions/109582):
+  # modify data to be the data object returned from db insertion
 
   dataFromForm = request.form
 
@@ -474,7 +490,7 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
+  # TODO - Done: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
   
@@ -606,29 +622,59 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
+# TODO - Done: populate form with fields from artist with ID <artist_id>
+
   form = ArtistForm()
-  artist={
-    "id": 4,
-    "name": "Guns N Petals",
-    "genres": ["Rock n Roll"],
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "326-123-5000",
-    "website": "https://www.gunsnpetalsband.com",
-    "facebook_link": "https://www.facebook.com/GunsNPetals",
-    "seeking_venue": True,
-    "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
-  }
-  # TODO: populate form with fields from artist with ID <artist_id>
-  return render_template('forms/edit_artist.html', form=form, artist=artist)
+  query_artist = Artist.query.get(artist_id)
+
+  # fill the form with the data already available, what isn't available will remain empty for the user to fill in
+  if query_artist:
+    artist_details = Artist.getDetails(query_artist)
+    form.name.data = artist_details["name"]
+    form.genres.data = artist_details["genres"]
+    form.city.data = artist_details["city"]
+    form.state.data = artist_details["state"]
+    form.phone.data = artist_details["phone"]
+    form.facebook_link.data = artist_details["facebook_link"]
+    return render_template('forms/edit_artist.html', form=form, artist=artist_details) 
+  return render_template('errors/404.html')
+
+  # form = ArtistForm()
+  # artist={
+  #   "id": 4,
+  #   "name": "Guns N Petals",
+  #   "genres": ["Rock n Roll"],
+  #   "city": "San Francisco",
+  #   "state": "CA",
+  #   "phone": "326-123-5000",
+  #   "website": "https://www.gunsnpetalsband.com",
+  #   "facebook_link": "https://www.facebook.com/GunsNPetals",
+  #   "seeking_venue": True,
+  #   "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
+  #   "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
+  # }
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-  # TODO: take values from the form submitted, and update existing
+  # TODO - Done: take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
 
-  return redirect(url_for('show_artist', artist_id=artist_id))
+  artist_query = Artist.query.get(artist_id)
+
+  # upating the form with the user's entered data
+  if artist_query:
+    setattr(artist_query, 'name', request.form.get('name'))
+    setattr(artist_query, 'genres', request.form.get('genres'))
+    setattr(artist_query, 'city', request.form.get('city'))
+    setattr(artist_query, 'state', request.form.get('state'))
+    setattr(artist_query, 'phone', request.form.get('phone'))
+    setattr(artist_query, 'facebook_link', request.form.get('facebook_link'))
+    Artist.updateArtist(artist_query)
+    
+    return redirect(url_for('show_artist', artist_id=artist_id))
+  else:
+    flash('Updating the form was not successful')
+  return render_template('errors/404.html')
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
@@ -668,7 +714,8 @@ def create_artist_form():
 def create_artist_submission():
   # called upon submitting the new artist listing form
   # TODO - Done: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
+  # TODO - adviced to be ignored in question 109582 (https://knowledge.udacity.com/questions/109582):
+  #  modify data to be the data object returned from db insertion
   dataFromForm = request.form
 
   try:
