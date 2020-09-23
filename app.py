@@ -138,7 +138,7 @@ class Artist(db.Model):
         'image_link': self.image_link,
         'facebook_link': self.facebook_link
       }
-      
+
     def getShortDisplay(self):
       return {
         'id': self.id,
@@ -456,12 +456,19 @@ def create_venue_submission():
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
-  # TODO: Complete this endpoint for taking a venue_id, and using
+  # TODO - Done: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
+
+  venue_query = Venue.query.get(venue_id)
+  
+  if venue_query:
+    Venue.deleteVenue(venue_query)
+  else:
+    flash('An error occurred while deleting the venue, please try again later')
+  return None
 
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
-  return None
 
 #  Artists
 #  ----------------------------------------------------------------
@@ -664,7 +671,7 @@ def edit_artist_submission(artist_id):
   # upating the form with the user's entered data
   if artist_query:
     setattr(artist_query, 'name', request.form.get('name'))
-    setattr(artist_query, 'genres', request.form.get('genres'))
+    setattr(artist_query, 'genres', request.form.getlist('genres'))
     setattr(artist_query, 'city', request.form.get('city'))
     setattr(artist_query, 'state', request.form.get('state'))
     setattr(artist_query, 'phone', request.form.get('phone'))
@@ -678,29 +685,42 @@ def edit_artist_submission(artist_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
+# TODO - Done: populate form with values from venue with ID <venue_id>  
   form = VenueForm()
-  venue={
-    "id": 1,
-    "name": "The Musical Hop",
-    "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    "address": "1015 Folsom Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "123-123-1234",
-    "website": "https://www.themusicalhop.com",
-    "facebook_link": "https://www.facebook.com/TheMusicalHop",
-    "seeking_talent": True,
-    "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
-  }
-  # TODO: populate form with values from venue with ID <venue_id>
-  return render_template('forms/edit_venue.html', form=form, venue=venue)
+  venue_query = Venue.query.get(venue_id)
+
+  # fill the form with the data already available, what isn't available will remain empty for the user to fill in
+  if venue_query:
+    venue_details = Venue.getDetails(venue_query)
+    form.name.data = venue_details["name"]
+    form.genres.data = venue_details["genres"]
+    form.address.data = venue_details["address"]
+    form.city.data = venue_details["city"]
+    form.state.data = venue_details["state"]
+    form.phone.data = venue_details["phone"]
+    form.facebook_link.data = venue_details["facebook_link"]
+    return render_template('forms/edit_venue.html', form=form, venue=venue_details)
+  return render_template('errors/404.html')
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-  # TODO: take values from the form submitted, and update existing
+  # TODO - Done: take values from the form submitted, and update existing
   # venue record with ID <venue_id> using the new attributes
-  return redirect(url_for('show_venue', venue_id=venue_id))
+
+  venue_query = Venue.query.get(venue_id)
+
+  # upating the form with the user's entered data
+  if venue_query:
+    setattr(venue_query, 'name', request.form.get('name'))
+    setattr(venue_query, 'genres', request.form.getlist('genres'))
+    setattr(venue_query, 'city', request.form.get('city'))
+    setattr(venue_query, 'state', request.form.get('state'))
+    setattr(venue_query, 'address', request.form.get('address'))
+    setattr(venue_query, 'phone', request.form.get('phone'))
+    setattr(venue_query, 'facebook_link', request.form.get('facebook_link'))
+    Venue.updateVenue(venue_query)
+    return redirect(url_for('show_venue', venue_id=venue_id))
+  return render_template('errors/404.html')
 
 #  Create Artist
 #  ----------------------------------------------------------------
