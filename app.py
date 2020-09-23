@@ -122,6 +122,11 @@ class Artist(db.Model):
         'image_link': self.image_link,
         'facebook_link': self.facebook_link
       }
+    def getShortDisplay(self):
+      return {
+        'id': self.id,
+        'name': self.name
+      }
 
 # TODO - Boulos : change Nullable to False after DB entries then mark as Done
 
@@ -439,17 +444,25 @@ def delete_venue(venue_id):
 @app.route('/artists')
 def artists():
   # TODO: replace with real data returned from querying the database
-  data=[{
-    "id": 4,
-    "name": "Guns N Petals",
-  }, {
-    "id": 5,
-    "name": "Matt Quevedo",
-  }, {
-    "id": 6,
-    "name": "The Wild Sax Band",
-  }]
-  return render_template('pages/artists.html', artists=data)
+
+  # get all artists from the db
+  query_artist = Artist.query.all()
+
+  # map retrieved artists to the display short form
+  mapped_artists = list(map(Artist.getShortDisplay, query_artist))
+
+  return render_template('pages/artists.html', artists=mapped_artists)
+
+  # data=[{
+  #   "id": 4,
+  #   "name": "Guns N Petals",
+  # }, {
+  #   "id": 5,
+  #   "name": "Matt Quevedo",
+  # }, {
+  #   "id": 6,
+  #   "name": "The Wild Sax Band",
+  # }]
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
