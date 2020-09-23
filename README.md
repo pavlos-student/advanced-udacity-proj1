@@ -69,7 +69,7 @@ git clone https://github.com/pavlos-student/advanced-udacity-proj1
   ```
   $ flask db init 
   $ flask db migrate 
-  $ flask db upgrate 
+  $ flask db upgrade
   ```
 
 4. Run the development server:
