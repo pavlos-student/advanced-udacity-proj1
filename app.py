@@ -287,7 +287,7 @@ def show_venue(venue_id):
   # check if venue exists, otherwise redirect to 404 page (NOT FOUND)
   if venue_inDB:
     venue_details = Venue.getDetails(venue_inDB)
-    current_time = datetime.now().strftime('%Y-%m-%d')
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
     ## Get upcoming shows & its' count ## 
     # perform a JOIN SQL statement between the Show & Artist in order to get the upcoming show (new shows) where the start time will be after the current time
