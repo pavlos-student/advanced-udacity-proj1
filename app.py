@@ -98,6 +98,7 @@ class Artist(db.Model):
     city = db.Column(db.String(120))
     state = db.Column(db.String(120))
     phone = db.Column(db.String(120))
+    website = db.Column(db.String(120))
     genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
@@ -107,11 +108,12 @@ class Artist(db.Model):
     # TODO - Done : implement any missing fields, as a database migration using Flask-Migrate
 
     # initializing data - constructor
-    def __init__(self, name, city, state, phone, genres, image_link, facebook_link):
+    def __init__(self, name, city, state, phone, website, genres, image_link, facebook_link):
       self.name = name
       self.city = city
       self.state = state
       self.phone = phone
+      self.website = website
       self.genres = genres
       self.image_link = image_link
       self.facebook_link = facebook_link
@@ -134,6 +136,7 @@ class Artist(db.Model):
         'city': self.city,
         'state': self.state,
         'phone': self.phone,
+        'website': self.website,
         'genres': self.genres,
         'image_link': self.image_link,
         'facebook_link': self.facebook_link
@@ -436,6 +439,7 @@ def create_venue_submission():
     newVenue = Venue(
       name = dataFromForm.get('name'),
       genres = dataFromForm.getlist('genres'),
+      website = dataFromForm.get('website'),
       city = dataFromForm.get('city'),
       state = dataFromForm.get('state'),
       address = dataFromForm.get('address'),
@@ -642,6 +646,7 @@ def edit_artist(artist_id):
     form.city.data = artist_details["city"]
     form.state.data = artist_details["state"]
     form.phone.data = artist_details["phone"]
+    form.website.data = artist_details["website"]
     form.facebook_link.data = artist_details["facebook_link"]
     return render_template('forms/edit_artist.html', form=form, artist=artist_details) 
   return render_template('errors/404.html')
@@ -674,6 +679,7 @@ def edit_artist_submission(artist_id):
     setattr(artist_query, 'genres', request.form.getlist('genres'))
     setattr(artist_query, 'city', request.form.get('city'))
     setattr(artist_query, 'state', request.form.get('state'))
+    setattr(artist_query, 'website', request.form.get('website'))
     setattr(artist_query, 'phone', request.form.get('phone'))
     setattr(artist_query, 'facebook_link', request.form.get('facebook_link'))
     Artist.updateArtist(artist_query)
@@ -695,6 +701,7 @@ def edit_venue(venue_id):
     form.name.data = venue_details["name"]
     form.genres.data = venue_details["genres"]
     form.address.data = venue_details["address"]
+    form.website.data = venue_details["website"]
     form.city.data = venue_details["city"]
     form.state.data = venue_details["state"]
     form.phone.data = venue_details["phone"]
@@ -714,6 +721,7 @@ def edit_venue_submission(venue_id):
     setattr(venue_query, 'name', request.form.get('name'))
     setattr(venue_query, 'genres', request.form.getlist('genres'))
     setattr(venue_query, 'city', request.form.get('city'))
+    setattr(venue_query, 'website', request.form.get('website'))
     setattr(venue_query, 'state', request.form.get('state'))
     setattr(venue_query, 'address', request.form.get('address'))
     setattr(venue_query, 'phone', request.form.get('phone'))
@@ -743,6 +751,7 @@ def create_artist_submission():
     newArtist = Artist(
       name = dataFromForm.get('name'),
       city = dataFromForm.get('city'),
+      website = dataFromForm.get('website'),
       state = dataFromForm.get('state'),
       phone = dataFromForm.get('phone'),
       genres = dataFromForm.getlist('genres'),
