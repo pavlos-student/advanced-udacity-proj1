@@ -43,7 +43,8 @@ class Venue(db.Model):
     website = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
-    venue_shows = db.relationship('Show', backref='Venue', lazy=True)
+    venue_shows = db.relationship('Show', backref='Venue', lazy="dynamic")
+    # reference for Dynamic relationship loaders: https://docs.sqlalchemy.org/en/13/orm/collections.html
 
     # TODO - Done: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -89,7 +90,8 @@ class Artist(db.Model):
     genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
-    artist_shows = db.relationship('Show', backref='Artist', lazy=True)
+    artist_shows = db.relationship('Show', backref='Artist', lazy="dynamic")
+    # reference for Dynamic relationship loaders: https://docs.sqlalchemy.org/en/13/orm/collections.html
 
     # TODO - Done : implement any missing fields, as a database migration using Flask-Migrate
 
@@ -198,30 +200,66 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
+  # TODO - Done: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  
+  current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+  city_state = ''
+  data = []
+
+  # SELECT fields from Venue Group By id, city & state
+  query_venue = Venue.query.group_by(Venue.id, Venue.city, Venue.state).all()
+
+  # get the upcoming shows for every venue where the show will be after the current time (futur/upcoming show)
+  # then assign to each venue the appropriate data grouping by the city & state
+  # here we use the one-to-many relationship between Venue & Show from the attribute venue_shows to access the venue show start time
+  for venue in query_venue:
+    upcoming_shows = venue.venue_shows.filter(Show.start_time > current_time).all()
+
+    # if city & state are equal to the venues city & state then just append the upcoming number of shows to the venues JSON
+    # otherwise set the city & state to the venues + the upcoming show numbers
+    #  data[len(data) - 1]["venues"] to append to the venues place in the JSON object according to its place (the data length may change in the future that's why it's generic)
+    if city_state == venue.city + venue.state:
+      data[len(data) - 1]["venues"].append({
+        'id': venue.id,
+        'name': venue.name,
+        'num_upcoming_shows': len(upcoming_shows)
+      })
+    else:
+      city_state = venue.city + venue.state
+      data.append({
+        'city': venue.city,
+        'state': venue.state,
+        'venues': [{
+          'id': venue.id,
+          'name': venue.name,
+          'num_upcoming_shows': len(upcoming_shows)
+        }]
+      })
+
   return render_template('pages/venues.html', areas=data);
+  
+  # data=[{
+  #   "city": "San Francisco",
+  #   "state": "CA",
+  #   "venues": [{
+  #     "id": 1,
+  #     "name": "The Musical Hop",
+  #     "num_upcoming_shows": 0,
+  #   }, {
+  #     "id": 3,
+  #     "name": "Park Square Live Music & Coffee",
+  #     "num_upcoming_shows": 1,
+  #   }]
+  # }, {
+  #   "city": "New York",
+  #   "state": "NY",
+  #   "venues": [{
+  #     "id": 2,
+  #     "name": "The Dueling Pianos Bar",
+  #     "num_upcoming_shows": 0,
+  #   }]
+  # }]
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
