@@ -64,8 +64,6 @@ class Venue(db.Model):
       db.session.add(self)
       db.session.commit()
 
-    # add: update & delete functions
-
     def getDetails(self):
       return {
         'id': self.id,
@@ -78,6 +76,12 @@ class Venue(db.Model):
         'website': self.website,
         'image_link': self.image_link,
         'facebook_link': self.facebook_link
+      }
+    
+    def getShortDisplay(self):
+      return {
+        'id': self.id,
+        'name': self.name
       }
 
 class Artist(db.Model):
@@ -109,8 +113,6 @@ class Artist(db.Model):
       db.session.add(self)
       db.session.commit()
 
-    # add: update & delete functions
-
     def getDetails(self):
       return {
         'id': self.id,
@@ -128,9 +130,7 @@ class Artist(db.Model):
         'name': self.name
       }
 
-# TODO - Boulos : change Nullable to False after DB entries then mark as Done
-
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+# TODO - Done: Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 class Show(db.Model):
   __tablename__ = 'Show'
   id = db.Column(db.Integer, primary_key=True)
@@ -147,8 +147,6 @@ class Show(db.Model):
   def addShow(self):
     db.session.add(self)
     db.session.commit()
-
-    # add: update & delete functions
 
   def getDetails(self):
     return {
@@ -271,20 +269,30 @@ def search_venues():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-  response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
+  
+  query_venu = Venue.query.filter(Venue.name.ilike('%' + request.form['search_term'] + '%'))
+  for result in query_venu:
+    venue_array = list(map(Venue.getShortDisplay, query_venu))
+    
+  response = {
+    "count": len(venue_array),
+    "data": venue_array
   }
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+
+  # response={
+  #   "count": 1,
+  #   "data": [{
+  #     "id": 2,
+  #     "name": "The Dueling Pianos Bar",
+  #     "num_upcoming_shows": 0,
+  #   }]
+  # }
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
   # shows the venue page with the given venue_id
-  # TODO: replace with real venue data from the venues table, using venue_id
+  # TODO - Done: replace with real venue data from the venues table, using venue_id
   
   # get venue from the db
   venue_inDB = Venue.query.get(venue_id)
@@ -443,7 +451,7 @@ def delete_venue(venue_id):
 #  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
-  # TODO: replace with real data returned from querying the database
+  # TODO - Done: replace with real data returned from querying the database
 
   # get all artists from the db
   query_artist = Artist.query.all()
@@ -469,20 +477,30 @@ def search_artists():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
-  response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
+  
+  query_artist = Artist.query.filter(Artist.name.ilike('%' + request.form['search_term'] + '%'))
+  for result in query_artist:
+    artist_array = list(map(Artist.getShortDisplay, query_artist))
+    
+  response = {
+    "count": len(artist_array),
+    "data": artist_array
   }
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+
+  # response={
+  #   "count": 1,
+  #   "data": [{
+  #     "id": 4,
+  #     "name": "Guns N Petals",
+  #     "num_upcoming_shows": 0,
+  #   }]
+  # }
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
   # shows the venue page with the given venue_id
-  # TODO: replace with real venue data from the venues table, using venue_id
+  # TODO - Done: replace with real venue data from the venues table, using venue_id
 
   # get artist from the db
   artist_inDB = Artist.query.get(artist_id)
@@ -681,7 +699,7 @@ def create_artist_submission():
 @app.route('/shows')
 def shows():
   # displays list of shows at /shows
-  # TODO: replace with real venues data.
+  # TODO - Done : replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
   query_shows = Show.query.all()
   mapped_shows = list(map(Show.getDetails, query_shows))
